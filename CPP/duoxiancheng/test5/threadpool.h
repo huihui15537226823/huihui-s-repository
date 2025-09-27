@@ -34,12 +34,12 @@ private:
     void run();
 
 private:
-    std::vector<std::thread> work_threads;
-    std::queue<std::unique_ptr<T>> tasks_queue;
+    std::vector<std::thread> work_threads;//工作线程池,保存所有线程对象
+    std::queue<std::unique_ptr<T>> tasks_queue;//任务队列,每一个任务是一个 unique_ptr<T>
 
-    std::mutex queue_mutex;
-    std::condition_variable condition;
-    bool stop; // 受 mutex 保护
+    std::mutex queue_mutex;//互斥锁,保证多线程访问安全
+    std::condition_variable condition;//条件变量用于线程阻塞/唤醒
+    bool stop; // 受 mutex 保护,线程池是否关闭标志
 };
 
 // ---------- 实现 ----------
