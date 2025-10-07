@@ -1,0 +1,26 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build cuda",
+      "type": "shell",
+      "command": "nvcc",
+      "args": [
+        "-ccbin",
+        "E:/VS2022/Shared/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64",
+        "-o",
+        "${fileDirname}/${fileBasenameNoExtension}.exe",
+        "${file}",
+        "-Xcompiler",
+        "/link",
+        "/NOLOGO"
+
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": ["$gcc"]
+    }
+  ]
+}

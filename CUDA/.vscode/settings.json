@@ -1,0 +1,13 @@
+{
+  "C_Cpp.default.compilerPath": "E:/VS2022/Shared/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/cl.exe",
+  "C_Cpp.default.includePath": [
+    "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/include",
+    "${workspaceFolder}/**"
+  ],
+  "C_Cpp.default.defines": [
+    "__CUDACC__"
+  ],
+  "C_Cpp.default.cStandard": "c11",
+  "C_Cpp.default.cppStandard": "c++17",
+  "C_Cpp.default.intelliSenseMode": "windows-msvc-x64"
+}
