@@ -1,16 +1,16 @@
 #include <stdio.h>
-//CUDAå¤„ç†å®,åŒ…è£…cudaå‡½æ•°è°ƒç”¨
+//CUDA´¦Àíºê,°ü×°cudaº¯Êıµ÷ÓÃ
 #define gpuErrchk(ans) {gpuAssert((ans),__FILE__, __LINE__);}
 
-//é”™è¯¯å¤„ç†è¾…åŠ©å‡½æ•°
+//´íÎó´¦Àí¸¨Öúº¯Êı
 inline void gpuAssert(cudaError_t code,const char *file,int line){
     if(code!=cudaSuccess){
-        fprintf(stderr,"GPUé”™è¯¯:%s\n æ–‡ä»¶:%s\n è¡Œå·:%d\n", cudaGetErrorString(code),file,line);
+        fprintf(stderr,"GPU´íÎó:%s\n ÎÄ¼ş:%s\n ĞĞºÅ:%d\n", cudaGetErrorString(code),file,line);
         exit(code);
     }
 }
 
-// CPUå‡½æ•°ï¼šç”¨æŒ‡å®šå€¼åˆå§‹åŒ–æ•°ç»„
+// CPUº¯Êı£ºÓÃÖ¸¶¨Öµ³õÊ¼»¯Êı×é
 void initWith(float num, float *a, int N)
 {
   for(int i = 0; i < N; ++i)
@@ -19,13 +19,73 @@ void initWith(float num, float *a, int N)
   }
 }
 
-// GPUæ ¸å‡½æ•°ï¼šå¹¶è¡Œæ‰§è¡Œå‘é‡åŠ æ³•
-// ä½¿ç”¨ç½‘æ ¼è·¨åº¦å¾ªç¯å¤„ç†å¤§æ•°ç»„
+// GPUºËº¯Êı£º²¢ĞĞÖ´ĞĞÏòÁ¿¼Ó·¨
+// Ê¹ÓÃÍø¸ñ¿ç¶ÈÑ­»·´¦Àí´óÊı×é
 __global__ void addVectorsInto(float *result,float *a,float *b,int N){
-    // è®¡ç®—å½“å‰çº¿ç¨‹çš„å…¨å±€ç´¢å¼•
+    // ¼ÆËãµ±Ç°Ïß³ÌµÄÈ«¾ÖË÷Òı
     int index = blockIdx.x * blockDim.x + threadIdx.x;
-    // è®¡ç®—ç½‘æ ¼æ€»å¤§å°ï¼ˆæ€»çº¿ç¨‹æ•°ï¼‰
+    // ¼ÆËãÍø¸ñ×Ü´óĞ¡£¨×ÜÏß³ÌÊı£©
     int stride = blockDim.x * gridDim.x;
 
-    
+    // Ê¹ÓÃÍø¸ñ¿ç¶ÈÑ­»·£¬Ã¿¸öÏß³Ì´¦Àí¶à¸öÔªËØ
+    for(int i = index; i < N; i += stride){
+        result[i] = a[i] + b[i];
+    }
+}
+
+// CPUº¯Êı£ºÑéÖ¤½á¹ûÊÇ·ñÕıÈ·
+void checkElementsAre(float target, float *array, int N)
+{
+  for(int i = 0; i < N; i++)
+  {
+    if(array[i] != target)
+    {
+      printf("FAIL: array[%d] - %0.0f does not equal %0.0f\n", i, array[i], target);
+      exit(1);
+    }
+  }
+  printf("SUCCESS! All values added correctly.\n");
+}
+
+int main(){
+  // ÉèÖÃÊı×é´óĞ¡£º2^21 = 2,097,152¸öÔªËØ
+  const int N = 2<<20;
+  size_t size = N * sizeof(float);
+
+  // ÉùÃ÷Èı¸ö¸¡µãÊıÊı×éÖ¸Õë
+  float *a;
+  float *b;
+  float *c;
+
+  // ·ÖÅäÍ³Ò»ÄÚ´æ£¬Ê¹CPUºÍGPU¶¼ÄÜ·ÃÎÊ
+  gpuErrchk(cudaMallocManaged(&a, size));
+  gpuErrchk(cudaMallocManaged(&b, size));
+  gpuErrchk(cudaMallocManaged(&c, size));
+
+  // ³õÊ¼»¯Êı×é£ºaÈ«Îª3£¬bÈ«Îª4£¬cÈ«Îª0
+  initWith(3, a, N);
+  initWith(4, b, N);
+  initWith(0, c, N);
+
+  // ÉèÖÃCUDAºËº¯ÊıÖ´ĞĞÅäÖÃ
+  int threadsPerBlock = 256;
+  // ¼ÆËãĞèÒªµÄ¿éÊı£¬È·±£ÄÜ´¦ÀíËùÓĞÔªËØ
+  int numberOfBlocks = (N + threadsPerBlock - 1) / threadsPerBlock;
+
+  // Æô¶¯ºËº¯Êı½øĞĞÏòÁ¿¼Ó·¨
+  addVectorsInto<<<numberOfBlocks, threadsPerBlock>>>(c, a, b, N);
+  // ¼ì²éºËº¯ÊıÆô¶¯´íÎó
+  gpuErrchk(cudaPeekAtLastError());
+  // µÈ´ıGPUÍê³É²¢¼ì²éÔËĞĞÊ±´íÎó
+  gpuErrchk(cudaDeviceSynchronize());
+
+  // ÑéÖ¤½á¹û£ºËùÓĞÔªËØÓ¦¸ÃµÈÓÚ7£¨3+4£©
+  checkElementsAre(7, c, N);
+
+  // ÊÍ·ÅÍ³Ò»ÄÚ´æ
+  gpuErrchk(cudaFree(a));
+  gpuErrchk(cudaFree(b));
+  gpuErrchk(cudaFree(c));
+
+  return 0;
 }
