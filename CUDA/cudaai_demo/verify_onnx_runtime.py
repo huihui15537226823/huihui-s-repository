@@ -5,6 +5,9 @@ import time
 # 1. 创建 ONNX Runtime 推理会话
 session = ort.InferenceSession("resnet50.onnx", providers=['CUDAExecutionProvider'])
 
+# ✅ 检查实际使用的执行提供者
+print("当前执行提供者：", session.get_providers())  # 如果有 'CUDAExecutionProvider'，说明 GPU 被启用
+
 # 2. 准备测试输入
 dummy_input = np.random.randn(1, 3, 224, 224).astype(np.float32)
 
